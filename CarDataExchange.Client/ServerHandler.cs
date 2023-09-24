@@ -60,6 +60,7 @@ namespace CarDataExchange.Client
                         await Console.Out.WriteLineAsync();
                         ConsoleHelper.WriteColoredLine("Получены данные:", ConsoleColor.Magenta);
                         ConsoleHelper.WriteColoredLine(decoded, ConsoleColor.Green);
+                        Console.WriteLine("Сохранение информации...");
                         _logHandler.Write(decoded.Value);
                     });
 
