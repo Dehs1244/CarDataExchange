@@ -9,16 +9,16 @@ using System.Xml.Serialization;
 namespace CarDataExchange.Client
 {
     /// <summary>
-    /// Реализует сохранение полученных записей объектов в XML формат.
+    /// Реализует сохранение полученных записей объектов в XML файловый формат.
     /// </summary>
-    internal class XMLLogger : ILogHandler
+    internal class XMLFileLogger : ILogHandler
     {
         /// <summary>
         /// Папка, в которой хранятся файлы.
         /// </summary>
         public readonly string LogDirectory;
 
-        public XMLLogger(string directory)
+        public XMLFileLogger(string directory)
         {
             LogDirectory = directory;
             EnsureDirectoryCreated();

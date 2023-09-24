@@ -31,7 +31,7 @@ namespace CarDataExchange.Client
             CarDecoder = carDecoder;
             _consoleToken = new CancellationTokenSource();
 
-            _logHandler = new XMLLogger("logs");
+            _logHandler = new XMLFileLogger("logs");
         }
 
         public bool IsConnected => _client.Connected;
