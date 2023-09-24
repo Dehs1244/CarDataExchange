@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Core.Models
 {
+    /// <summary>
+    /// Реализует структуру для обмена сообщениями между клиентом и сервером.
+    /// </summary>
     [Serializable]
     public readonly record struct Message
     {

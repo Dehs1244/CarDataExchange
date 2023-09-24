@@ -6,12 +6,25 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Core
 {
+    /// <summary>
+    /// Описание обработанного значения в последовательности битов.
+    /// </summary>
+    /// <typeparam name="T">Обработанное значение</typeparam>
     public struct DecodedInfo<T>
     {
         private T? _value;
+        /// <summary>
+        /// Обработанное значение.
+        /// </summary>
         public T? Value { readonly get => _value; set => 
                 _value = !IsStructStarted ? throw new Exception("Struct not started to write") : value; }
+        /// <summary>
+        /// Был ли токен начала записи структуры.
+        /// </summary>
         public readonly bool IsStructStarted => ElementsCount > 0;
+        /// <summary>
+        /// Кол-во записей.
+        /// </summary>
         public int ElementsCount;
 
         public override string ToString()

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarDataExchange.Server", "CarDataExchange.Server\CarDataExchange.Server.csproj", "{7605C4A6-266B-451E-BD5C-002AE4B4D8A4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarDataExchange.Core", "CarDataEchange.Core\CarDataExchange.Core.csproj", "{99F6E66E-CB24-44DC-95CE-BDF0E734A724}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarDataExchange.Core", "CarDataExchange.Core\CarDataExchange.Core.csproj", "{99F6E66E-CB24-44DC-95CE-BDF0E734A724}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarDataExchange.Tests", "CarDataExchange.Tests\CarDataExchange.Tests.csproj", "{E13BDE09-6F7F-4F9C-BB6C-7E105CEB69ED}"
 EndProject

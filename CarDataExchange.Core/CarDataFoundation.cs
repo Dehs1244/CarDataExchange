@@ -6,6 +6,9 @@ using System.Text;
 
 namespace CarDataExchange.Core
 {
+    /// <summary>
+    /// Реализует конвертацию обработанных данных в структуру <see cref="Car"/>.
+    /// </summary>
     public class CarDataFoundation : BaseDataFoundation<Car>
     {
         public override Car ConvertToData(IReadOnlyCollection<DataObject> body)

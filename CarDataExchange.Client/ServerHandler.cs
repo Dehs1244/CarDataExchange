@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Client
 {
+    /// <summary>
+    /// Реализует ассинхронную связь с сервером. Один поток обрабатывает входящие сообщения, другой исходящие.
+    /// </summary>
     internal class ServerHandler : IDisposable
     {
         private readonly TcpClient _client;
@@ -18,6 +21,8 @@ namespace CarDataExchange.Client
         public readonly IEncoder<Message> MessageEncoder;
         private bool _disposed;
         private CancellationTokenSource _consoleToken;
+
+        private readonly ILogHandler _logHandler;
         
         public ServerHandler(TcpClient client, IDecoder<DecodedInfo<Car>> carDecoder, IEncoder<Message> messageEncoder) 
         {
@@ -25,6 +30,8 @@ namespace CarDataExchange.Client
             MessageEncoder = messageEncoder;
             CarDecoder = carDecoder;
             _consoleToken = new CancellationTokenSource();
+
+            _logHandler = new XMLLogger("logs");
         }
 
         public bool IsConnected => _client.Connected;
@@ -37,7 +44,10 @@ namespace CarDataExchange.Client
             await ConsoleHelper.WriteColoredLineAsync("Запрос отправлен", ConsoleColor.Green, _consoleToken.Token);
         }
 
-        public async Task ListenForResponse(CancellationToken token = default)
+        /// <summary>
+        /// Поток для прослушивания сообщений
+        /// </summary>
+        public async Task ListenForResponseAsync(CancellationToken token = default)
         {
             while (!token.IsCancellationRequested && IsConnected)
             {
@@ -50,6 +60,7 @@ namespace CarDataExchange.Client
                         await Console.Out.WriteLineAsync();
                         ConsoleHelper.WriteColoredLine("Получены данные:", ConsoleColor.Magenta);
                         ConsoleHelper.WriteColoredLine(decoded, ConsoleColor.Green);
+                        _logHandler.Write(decoded.Value);
                     });
 
                     _consoleToken = new CancellationTokenSource();
@@ -59,13 +70,17 @@ namespace CarDataExchange.Client
             }
         }
 
+        /// <summary>
+        /// Main Loop для связи с севрером. Запускает два асинхронных потока.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">Выбрасывается в случае, если объект был освобождён.</exception>
         public async Task LoopAsync(CancellationToken token = default)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(TcpClient));
 
             try
             {
-                await Task.WhenAll(_LoopInternalAsync(token), ListenForResponse(token));
+                await Task.WhenAll(_LoopInternalAsync(token), ListenForResponseAsync(token));
             }
             catch(Exception ex)
             {
@@ -80,9 +95,12 @@ namespace CarDataExchange.Client
             }
         }
 
+        /// <summary>
+        /// Прослушивает команды для исходящих сообщений.
+        /// </summary>
         private async Task _LoopInternalAsync(CancellationToken token = default)
         {
-            while (IsConnected)
+            while (IsConnected && !token.IsCancellationRequested)
             {
                 try
                 {

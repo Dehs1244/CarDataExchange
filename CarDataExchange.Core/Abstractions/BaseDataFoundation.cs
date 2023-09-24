@@ -10,6 +10,10 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Core.Abstractions
 {
+    /// <summary>
+    /// Базовая реализация десериализации и сериализации данных.
+    /// Десериализация реализуется на основе структуры описания расшифрованных данных.
+    /// </summary>
     public abstract class BaseDataFoundation<T> : IDecoder<DecodedInfo<T>>, IEncoder<T>
         where T : notnull
     {

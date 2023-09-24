@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Core.Models
 {
+    /// <summary>
+    /// Описание стркутры для автомобиля.
+    /// </summary>
     [Serializable]
     public readonly record struct Car
     {

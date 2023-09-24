@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Backend
 {
+    /// <summary>
+    /// Реализует клиента на стороне сервера для обработки сообщений.
+    /// </summary>
     internal class ClientHandler : IDisposable
     {
         public readonly IDecoder<DecodedInfo<Message>> MessageDecoder;
@@ -73,7 +76,7 @@ namespace CarDataExchange.Backend
 
                 Console.WriteLine("Клиент отключился");
             }
-            catch (OperationCanceledException ex)
+            catch (OperationCanceledException)
             {
             }catch(Exception ex)
             {

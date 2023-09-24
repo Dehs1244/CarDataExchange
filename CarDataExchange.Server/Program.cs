@@ -41,7 +41,7 @@ internal class Program
             {
                 TcpClient connectedClient = socketListener.AcceptTcpClient();
                 Console.WriteLine("Подключён клиент");
-                ClientHandler handler = new(connectedClient, messageDataFoundation, carDataFoundation);
+                using ClientHandler handler = new(connectedClient, messageDataFoundation, carDataFoundation);
                 Task.Run(() => handler.HandleAsync(token.Token), token.Token);
             }
         }catch(Exception e)

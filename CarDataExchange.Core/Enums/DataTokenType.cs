@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Core.Enums
 {
+    /// <summary>
+    /// Тип обработанного или обрабатываемого поля.
+    /// </summary>
     public enum DataTokenType : byte
     {
         Nothing = 0x00,

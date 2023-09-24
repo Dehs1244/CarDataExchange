@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace CarDataExchange.Core
 {
+    /// <summary>
+    /// Реализует конвертацию обработанных данных в структуру <see cref="Message"/>.
+    /// </summary>
     public class MessageDataFoundation : BaseDataFoundation<Message>
     {
         public override Message ConvertToData(IReadOnlyCollection<DataObject> body)

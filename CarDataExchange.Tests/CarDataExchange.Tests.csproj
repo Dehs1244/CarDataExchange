@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CarDataEchange.Core\CarDataExchange.Core.csproj" />
+    <ProjectReference Include="..\CarDataExchange.Core\CarDataExchange.Core.csproj" />
   </ItemGroup>
 
 </Project>
