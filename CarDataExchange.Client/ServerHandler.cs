@@ -40,33 +40,33 @@ namespace CarDataExchange.Client
         public async Task SendMessageAsync(Message message)
         {
             byte[] encodedMessage = MessageEncoder.Encode(message);
-            ClientStream.Write(encodedMessage, 0, encodedMessage.Length);
-            await ConsoleHelper.WriteColoredLineAsync("Запрос отправлен", ConsoleColor.Green, _consoleToken.Token);
+            await ClientStream.WriteAsync(encodedMessage, 0, encodedMessage.Length);
+            ConsoleHelper.WriteColoredLine("Запрос отправлен", ConsoleColor.Green);
         }
 
         /// <summary>
-        /// Поток для прослушивания сообщений
+        /// Ожидание для получения сообщения
         /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         public async Task ListenForResponseAsync(CancellationToken token = default)
         {
-            while (!token.IsCancellationRequested && IsConnected)
+            while (IsConnected && !token.IsCancellationRequested)
             {
-                if(CarDecoder.TryDecode(ClientStream, out DecodedInfo<Car> decoded))
+                if (CarDecoder.TryDecode(ClientStream, out DecodedInfo<Car> decoded))
                 {
-                    _consoleToken.Cancel();
-                    //_consoleToken.Dispose();
-                    await ConsoleHelper.SequenceAsync(async (token) =>
+                    Console.WriteLine();
+                    if(decoded.ElementsCount == 0)
                     {
-                        await Console.Out.WriteLineAsync();
-                        ConsoleHelper.WriteColoredLine("Получены данные:", ConsoleColor.Magenta);
-                        ConsoleHelper.WriteColoredLine(decoded, ConsoleColor.Green);
-                        Console.WriteLine("Сохранение информации...");
-                        _logHandler.Write(decoded.Value);
-                    });
-
-                    _consoleToken = new CancellationTokenSource();
+                        ConsoleHelper.WriteColoredLine("Данные не найдены", ConsoleColor.DarkRed);
+                        break;
+                    }
+                    ConsoleHelper.WriteColoredLine("Получены данные:", ConsoleColor.Magenta);
+                    ConsoleHelper.WriteColoredLine(decoded, ConsoleColor.Green);
+                    Console.WriteLine("Сохранение информации...");
+                    _logHandler.Write(decoded.Value);
+                    break;
                 }
-
                 await Task.Yield();
             }
         }
@@ -81,7 +81,7 @@ namespace CarDataExchange.Client
 
             try
             {
-                await Task.WhenAll(_LoopInternalAsync(token), ListenForResponseAsync(token));
+                await _LoopInternalAsync(token);
             }
             catch(Exception ex)
             {
@@ -106,38 +106,32 @@ namespace CarDataExchange.Client
                 try
                 {
                     string? command = string.Empty;
-                    await ConsoleHelper.SequenceAsync(async (token) =>
-                    {
-                        Console.Write("Введите комманду или напишите help: ");
-                        command = await ConsoleHelper.ReadLineAsync(token);
-                        Console.WriteLine();
-                        await Task.Yield();
-                    }, _consoleToken.Token);
+                    Console.Write("Введите комманду или напишите help: ");
+                    command = await ConsoleHelper.ReadLineAsync(token);
+                    Console.WriteLine();
 
                     switch (command)
                     {
                         case "G_ALL":
                             await ConsoleHelper.WriteLineAsync("Запрос на все записи...", _consoleToken.Token);
                             await SendMessageAsync(new Message() { Command = command });
+                            await ListenForResponseAsync(token);
                             break;
                         case "G_BY":
                             await ConsoleHelper.WriteLineAsync("Запрос на запись...", _consoleToken.Token);
-                            int? recordIndex = null;
+                            ushort recordIndex = 0;
 
-                            while (recordIndex == null)
+                            while (recordIndex == 0)
                             {
                                 await ConsoleHelper.WriteAsync("Введите номер записи: ", _consoleToken.Token);
-                                if (int.TryParse(await ConsoleHelper.ReadLineAsync(_consoleToken.Token), out int parsedIndex))
-                                {
-                                    recordIndex = parsedIndex;
-                                }
-                                else
+                                if (!ushort.TryParse(await ConsoleHelper.ReadLineAsync(_consoleToken.Token), out recordIndex))
                                 {
                                     await ConsoleHelper.WriteColoredLineAsync("Неправильно, введите НОМЕР в числовом виде", ConsoleColor.Red, _consoleToken.Token);
                                 }
                             }
 
-                            await SendMessageAsync(new Message() { Command = command });
+                            await SendMessageAsync(new Message() { Command = command, Index = recordIndex });
+                            await ListenForResponseAsync(token);
                             break;
                         case "help":
                             await ConsoleHelper.WriteLineAsync("Список команд: \n1. G_ALL - запрос на все записи \n2. G_BY - запрос по определённой записи", _consoleToken.Token);

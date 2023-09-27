@@ -44,6 +44,10 @@ namespace CarDataExchange.Tests.Generators
                     Year = 4
                 }
             };
+            yield return new object[]
+            {
+                new Car()
+            };
         }
     }
 }

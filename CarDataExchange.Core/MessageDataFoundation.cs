@@ -16,16 +16,26 @@ namespace CarDataExchange.Core
     {
         public override Message ConvertToData(IReadOnlyCollection<DataObject> body)
         {
-            var message = body.ElementAt(0);
-            InvalidDataObjectTokenException.ThrowIfInvalidToken(Enums.DataTokenType.String, message.Token);
+            ushort index = 0;
+            string message = string.Empty;
 
-            var index = body.ElementAt(1);
-            InvalidDataObjectTokenException.ThrowIfInvalidToken(Enums.DataTokenType.UInt16, index.Token);
+            foreach(var element in body)
+            {
+                switch (element.Token)
+                {
+                    case Enums.DataTokenType.String:
+                        message = element.ToObject<string>() ?? string.Empty;
+                        break;
+                    case Enums.DataTokenType.UInt16:
+                        index = element.ToObject<ushort>();
+                        break;
+                }
+            }
 
             return new Message()
             {
-                Command = message.ToObject<string>() ?? string.Empty,
-                Index = index.ToObject<ushort>()
+                Command = message,
+                Index = index
             };
         }
     }

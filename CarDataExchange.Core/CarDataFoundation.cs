@@ -13,20 +13,37 @@ namespace CarDataExchange.Core
     {
         public override Car ConvertToData(IReadOnlyCollection<DataObject> body)
         {
-            var brand = body.ElementAt(0);
-            InvalidDataObjectTokenException.ThrowIfInvalidToken(DataTokenType.String, brand.Token);
+            string brand = string.Empty;
+            ushort? year = null;
+            float? engineSize = null;
+            ushort? doors = null;
+            foreach(var element in body)
+            {
+                switch (element.Token)
+                {
+                    case DataTokenType.String:
+                        if (!string.IsNullOrEmpty(brand)) break;
 
-            var year = body.ElementAt(1);
-            InvalidDataObjectTokenException.ThrowIfInvalidToken(DataTokenType.UInt16, year.Token);
+                        brand = element.ToObject<string>() ?? string.Empty;
+                        break;
+                    case DataTokenType.UInt16:
+                        if (!year.HasValue) year = element.ToObject<ushort?>();
+                        else if(!doors.HasValue) doors = element.ToObject<ushort?>();
+                        break;
+                    case DataTokenType.FloatPoint:
+                        if (engineSize.HasValue) break;
 
-            var engineSize = body.ElementAt(2);
-            InvalidDataObjectTokenException.ThrowIfInvalidToken(DataTokenType.FloatPoint, engineSize.Token);
+                        engineSize = element.ToObject<float?>();
+                        break;
+                }
+            }
 
             return new Car()
             {
-                Brand = brand.ToObject<string>() ?? string.Empty,
-                Year = year.ToObject<ushort>(),
-                EngineSize = engineSize.ToObject<float>()
+                Brand = brand,
+                Year = year,
+                EngineSize = engineSize,
+                Doors = doors
             };
         }
     }

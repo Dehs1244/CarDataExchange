@@ -21,7 +21,7 @@ namespace CarDataExchange.Core
         /// <summary>
         /// Был ли токен начала записи структуры.
         /// </summary>
-        public readonly bool IsStructStarted => ElementsCount > 0;
+        public readonly bool IsStructStarted => ElementsCount > -1;
         /// <summary>
         /// Кол-во записей.
         /// </summary>

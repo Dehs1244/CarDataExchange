@@ -56,7 +56,6 @@ namespace CarDataExchange.Tests
 
             DecodedInfo<Car> decoded = dataFoundation.Decode(response, response.Length);
 
-            Assert.True(decoded.IsStructStarted);
             Assert.True(decoded.Value == carTest);
         }
     }

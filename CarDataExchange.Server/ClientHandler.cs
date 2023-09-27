@@ -66,7 +66,11 @@ namespace CarDataExchange.Backend
                                 SendAllCarsToClient();
                                 break;
                             case "G_BY":
-                                SendCarToClient(Program.AllCars.ElementAt(message.Value.Index!.Value));
+                                if (message.Value.Index.HasValue)
+                                {
+                                    Car senderCar = message.Value.Index.Value - 1 > Program.AllCars.Count() ? new Car() : Program.AllCars.ElementAt(message.Value.Index!.Value - 1);
+                                    SendCarToClient(senderCar);
+                                }
                                 break;
                         }
                     }

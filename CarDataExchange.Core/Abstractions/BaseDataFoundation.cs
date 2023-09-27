@@ -22,6 +22,7 @@ namespace CarDataExchange.Core.Abstractions
         public DecodedInfo<T> Decode(byte[] data, int length)
         {
             DecodedInfo<T> decoded = new();
+            decoded.ElementsCount = -1;
             int index = 0;
             List<DataObject> body = new();
 
@@ -37,7 +38,7 @@ namespace CarDataExchange.Core.Abstractions
                     case 0x09:
                         var strLen = data[index++];
                         Span<byte> strBytes = data.AsSpan(index, strLen);
-                        body.Add(new(Encoding.ASCII.GetString(strBytes).TrimEnd('\0'), DataTokenType.String));
+                        body.Add(new(Encoding.ASCII.GetString(strBytes), DataTokenType.String));
                         index += strLen;
                         break;
                     case 0x12:
@@ -54,12 +55,11 @@ namespace CarDataExchange.Core.Abstractions
                         body.Add(new (BitConverter.ToSingle(pointNumberBytes), DataTokenType.FloatPoint));
                         index += 4;
                         break;
-                    case 0x00: // Байт выравнивания
-                        body.Add(DataObject.Empty);
-                        break;
                     default:
                         throw new UnknownByteTypeException(type);
                 }
+
+                if (body.Count >= decoded.ElementsCount) break;
             }
 
             decoded.Value = ConvertToData(body);
@@ -86,72 +86,51 @@ namespace CarDataExchange.Core.Abstractions
         {
             ICollection<DataObject> encodingObjects = new List<DataObject>();
             Type typeOfData = data.GetType();
+            using MemoryStream stream = new();
 
-            foreach(var property in typeOfData.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            foreach (var property in typeOfData.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 var propertyValue = property.GetValue(data);
+                if (propertyValue == null) continue;
+
                 switch (propertyValue)
                 {
                     case string strValue:
-                        if (string.IsNullOrEmpty(strValue)) encodingObjects.Add(DataObject.Empty);
+                        if (string.IsNullOrEmpty(strValue)) break;
                         else encodingObjects.Add(new(propertyValue, DataTokenType.String));
+
+                        byte strLength = (byte)Math.Min(byte.MaxValue, strValue!.Length);
+                        stream.WriteByte(0x09); // 0x09 - Тип строки
+                        stream.WriteByte(strLength);
+                        _AppendBytesToStream(Encoding.ASCII.GetBytes(strValue[..strLength]), stream);
                         break;
-                    case ushort: 
-                        encodingObjects.Add(new(propertyValue, DataTokenType.UInt16));
-                        break;
-                    case short:
+                    case short int16CodeValue:
+                        stream.WriteByte(0x12); // 0x12 - Тип целого без знака
+                        _AppendNumberBytesToStream(BitConverter.GetBytes(int16CodeValue), stream);
                         encodingObjects.Add(new(propertyValue, DataTokenType.Int16));
                         break;
-                    case float:
-                        encodingObjects.Add(new(propertyValue, DataTokenType.FloatPoint));
+                    case ushort uint16CodeValue:
+                        stream.WriteByte(0x12); // 0x12 - Тип целого без знака
+                        _AppendNumberBytesToStream(BitConverter.GetBytes(uint16CodeValue), stream);
+                        encodingObjects.Add(new(propertyValue, DataTokenType.UInt16));
                         break;
-                    case null:
-                        encodingObjects.Add(DataObject.Empty);
+                    case float singleCodeValue:
+                        stream.WriteByte(0x13); // 0x12 - Тип целого без знака 
+                        _AppendNumberBytesToStream(BitConverter.GetBytes(singleCodeValue), stream);
+                        encodingObjects.Add(new(propertyValue, DataTokenType.UInt16));
                         break;
                     default:
-                        throw new NotSupportedException($"Type {propertyValue.GetType()} unsupported to encode");
+                        throw new NotSupportedException($"Type {propertyValue?.GetType()} unsupported to encode");
                 }
             }
 
-            using (MemoryStream stream = new MemoryStream())
-            {
-                //Заголовки
-                stream.WriteByte(0x02);
-                stream.WriteByte((byte)encodingObjects.Where(x=> x.Token != DataTokenType.Nothing).Count());
+            //Заголовки
+            using MemoryStream headerStream = new();
+            headerStream.WriteByte(0x02);
+            headerStream.WriteByte((byte)encodingObjects.Where(x => x.Token != DataTokenType.Nothing).Count());
+            stream.WriteTo(headerStream);
 
-                foreach(var dataObject in encodingObjects)
-                {
-
-                    switch (dataObject.Token)
-                    {
-                        case DataTokenType.String:
-                            stream.WriteByte(0x09); // 0x09 - Тип строки
-                            stream.WriteByte(0x06); // 0x06 - Длина строки
-                            var strValue = (string)dataObject.Value;
-                            _AppendBytesToStream(Encoding.ASCII.GetBytes(strValue[..Math.Min(6, strValue.Length)].PadRight(6, '\0')), stream);
-                            break;
-                        case DataTokenType.UInt16:
-                            stream.WriteByte(0x12); // 0x12 - Тип целого без знака
-                            _AppendNumberBytesToStream(BitConverter.GetBytes((ushort)dataObject.Value), stream);
-                            break;
-                        case DataTokenType.Int16:
-                            stream.WriteByte(0x12);
-                            _AppendNumberBytesToStream(BitConverter.GetBytes((short)dataObject.Value), stream);
-                            break;
-                        case DataTokenType.FloatPoint:
-                            stream.WriteByte(0x13); // 0x13 - Тип с плавающей точкой
-                            _AppendNumberBytesToStream(BitConverter.GetBytes((float)dataObject.Value), stream);
-                            break;
-                        case DataTokenType.Nothing:
-                            stream.WriteByte(0x00); // Пустой бит
-                            break;
-                        default:
-                            throw new NotSupportedException($"Token {dataObject.Token} unsupported");
-                    }
-                }
-
-                return stream.ToArray();
-            }
+            return headerStream.ToArray();
         }
 
         public bool TryDecode(Stream stream, out DecodedInfo<T> decoded)

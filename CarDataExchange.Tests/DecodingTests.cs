@@ -19,7 +19,9 @@ namespace CarDataExchange.Tests
                 Assert.True(string.IsNullOrEmpty(decoded.Value.Brand));
                 return;
             }
-            Assert.Equal(2008, decoded.Value.Year);
+
+            Assert.NotNull(decoded.Value.Year);
+            Assert.Equal(2008, decoded.Value.Year.Value);
             Assert.Equal("Nissan", decoded.Value.Brand);
         }
     }

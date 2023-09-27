@@ -31,6 +31,7 @@ internal class Program
         CarDataFoundation carDataFoundation = new CarDataFoundation();
         MessageDataFoundation messageDataFoundation = new();
         CancellationTokenSource token = new CancellationTokenSource();
+        ClientHandler? handler = null;
 
         try
         {
@@ -41,7 +42,7 @@ internal class Program
             {
                 TcpClient connectedClient = socketListener.AcceptTcpClient();
                 Console.WriteLine("Подключён клиент");
-                using ClientHandler handler = new(connectedClient, messageDataFoundation, carDataFoundation);
+                handler = new(connectedClient, messageDataFoundation, carDataFoundation);
                 Task.Run(() => handler.HandleAsync(token.Token), token.Token);
             }
         }catch(Exception e)
@@ -50,6 +51,7 @@ internal class Program
         }
         finally
         {
+            handler?.Dispose();
             token.Dispose();
             socketListener.Stop();
         }
